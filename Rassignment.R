@@ -36,7 +36,7 @@ dataAssignFrame <- as.data.frame(dataAssignVector)
 
 #Now I will see the framed data 
 
-View(dataAssignFrame)
+#View(dataAssignFrame)
 
 #I can see that data is arranged as I wanted , however there is an extra column 
 #which is not required for me , I will remove it 
@@ -45,7 +45,7 @@ dataAssignFrame$Empty <- NULL
 
 
 #I will view it again to see , Empty column is gone :) 
-View(dataAssignFrame)
+#View(dataAssignFrame)
 
 #I dont trust the hints :() so I will check the class of some of the columns
 class(dataAssignFrame$Rank)
@@ -66,9 +66,46 @@ dataAssignFrame$`Company Advertising` <- gsub("$", "", dataAssignFrame$`Company 
 #We still have some columns that has data having representation in B and M
 #However if I remove those, I will need indexes of column that has M to convert 
 #those in Billion as that is what is required to display
-View(dataAssignFrame)
+#View(dataAssignFrame)
 
-#I dont see any column in Million for Brand Value 
+#I dont see any column in Million for Brand Value and Brand revenue but only for 
+#Company Advertising 
 grep("M",dataAssignFrame$`Brand Value`)
 grep("M",dataAssignFrame$`Brand Revenue`)
 grep("M",dataAssignFrame$`Company Advertising`)
+
+#Also reminds me of removing B from Brand Value and Brand Revenue
+
+dataAssignFrame$`Brand Value` <- gsub("B", "", dataAssignFrame$`Brand Value`, fixed = TRUE)
+dataAssignFrame$`Brand Revenue` <- gsub("B", "", dataAssignFrame$`Brand Revenue`, fixed = TRUE)
+
+#I will save indexes of the million values in a vector 
+indexOfMillion <- grep("M",dataAssignFrame$`Company Advertising`)
+
+#Now I will convert the million values in Billions for scaling values
+
+dataAssignFrame$`Company Advertising` <- gsub("M", "", dataAssignFrame$`Company Advertising`, fixed = TRUE)
+dataAssignFrame$`Company Advertising` <- gsub("B", "", dataAssignFrame$`Company Advertising`, fixed = TRUE)
+dataAssignFrame$`Company Advertising` <- as.numeric(dataAssignFrame$`Company Advertising`)
+
+dataAssignFrameTmp <- dataAssignFrame
+dataAssignFrameTmp$`Company Advertising`[indexOfMillion] <- dataAssignFrameTmp$`Company Advertising`[indexOfMillion]*0.001
+dataAssignFrameTmp$Rank <- as.numeric(dataAssignFrameTmp$Rank)
+dataAssignFrameTmp$Brand <- as.character(dataAssignFrameTmp$Brand)
+dataAssignFrameTmp$`Brand Value` <- as.numeric(dataAssignFrameTmp$`Brand Value`)
+View(dataAssignFrame)
+dataAssignFrameTmp$`1-Yr Value Change`<-as.numeric(dataAssignFrameTmp$`1-Yr Value Change`)
+
+
+#Now we stored the filtered data to be plotted 
+library(dplyr)
+
+technology <- filter(dataAssignFrameTmp,dataAssignFrameTmp$Industry=="Technology")
+luxury <- filter(dataAssignFrameTmp,dataAssignFrameTmp$Industry=="Luxury")
+automotive <- filter(dataAssignFrameTmp,dataAssignFrameTmp$Industry=="Automotive")
+financial <- filter(dataAssignFrameTmp,dataAssignFrameTmp$Industry=="Financial Services")
+
+#Now our data is cleaned up, we can do charting :)
+library(ggplot2)
+
+ggplot() + geom_point(data=dataAssignFrameTmp, mapping=aes(x=dataAssignFrameTmp$`Company Advertising`, y=dataAssignFrameTmp$`Brand Revenue`, color=dataAssignFrameTmp$`Brand Value`, size=dataAssignFrameTmp$`Brand Value`))
